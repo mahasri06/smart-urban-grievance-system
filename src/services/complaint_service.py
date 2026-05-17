@@ -30,12 +30,13 @@ class ComplaintService:
         )
     
     @staticmethod
-    def get_complaints(db, page, size, location=None, title=None):
+    def get_complaints(db, page, size, sort , location=None, title=None):
 
         return ComplaintRepository.get_complaints(
             db,
             page,
             size,
+            sort,
             location,
             title
         )
@@ -50,3 +51,13 @@ class ComplaintService:
             db,
             complaint_id
         )
+    
+    @staticmethod
+    def get_complaints_by_location(db):
+
+        return ComplaintRepository.complaints_by_location(db)
+    
+    @staticmethod
+    def get_top_locations(db, limit):
+
+        return ComplaintRepository.top_locations(db, limit)

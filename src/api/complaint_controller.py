@@ -43,6 +43,7 @@ def get_complaint_by_id(
 def get_complaints(
     page: int = 1,
     size: int = 10,
+    sort: str = "latest",
     location: str = None,
     title: str = None,
     db: Session = Depends(get_db)
@@ -55,3 +56,16 @@ def get_complaints(
         location,
         title
     )
+
+@router.get("/analytics/complaints/by-location")
+def complaints_by_location(db: Session = Depends(get_db)):
+
+    return ComplaintService.get_complaints_by_location(db)
+
+@router.get("/analytics/complaints/top-locations")
+def top_locations(
+    limit: int = 3,
+    db: Session = Depends(get_db)
+):
+
+    return ComplaintService.get_top_locations(db, limit)
