@@ -1,0 +1,5 @@
+requests==2.31.0
+newspaper3k==0.2.8
+lxml==4.9.3
+lxml_html_clean
+feedparser==6.0.10
