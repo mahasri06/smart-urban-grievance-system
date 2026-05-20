@@ -45,6 +45,18 @@ class ComplaintRepository:
             .filter(Complaint.id == complaint_id)
             .first()
         )
+
+    @staticmethod
+    def get_complaints_by_ids(
+        db: Session,
+        complaint_ids: list[int]
+    ):
+        return (
+            db.query(Complaint)
+            .filter(Complaint.id.in_(complaint_ids))
+            .all()
+        )
+    
     
     
     @staticmethod

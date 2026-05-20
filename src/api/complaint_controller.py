@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 
 from sqlalchemy.orm import Session
 
@@ -30,11 +30,13 @@ def create_complaint(
 @router.post("/complaints/bulk")
 def create_complaints_bulk(
     complaints: List[ComplaintCreate],
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
     saved_complaints = ComplaintService.create_complaints_bulk(
         db,
-        complaints
+        complaints,
+        background_tasks
     )
     
     return saved_complaints

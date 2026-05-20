@@ -23,25 +23,60 @@ class ComplaintService:
         return saved_complaint
 
     @staticmethod
-    def create_complaints_bulk(db: Session, complaints_in: list[ComplaintCreate]):
+    def create_complaints_bulk(db: Session, complaints_in: list[ComplaintCreate], background_tasks):
         new_complaints = []
         for complaint_in in complaints_in:
-            # 1. Process NLP synchronously for each
-            cleaned_text = process_text(complaint_in.description)
-            
-            # 2. Create the complaint entity
+            # 2. Create the complaint entity without cleaning the text yet
             new_complaint = Complaint(
                 title=complaint_in.title,
                 description=complaint_in.description,
-                cleaned_description=cleaned_text,
                 location=complaint_in.location,
-                status="PROCESSED"
+                status="PENDING_ANALYSIS"
             )
             new_complaints.append(new_complaint)
             
-        # 3. Save all to database synchronously in bulk
+        # 3. Save all to database synchronously in bulk (Very fast)
         saved_complaints = ComplaintRepository.create_complaints_bulk(db, new_complaints)
+        
+        # 4. Schedule the heavy NLP processing in the background
+        complaint_ids = [c.id for c in saved_complaints]
+        background_tasks.add_task(ComplaintService.process_nlp_background, complaint_ids)
+        
         return saved_complaints
+
+    @staticmethod
+    def process_nlp_background(complaint_ids: list[int]):
+        """
+        This runs completely in the background after the API responds.
+        """
+        from database.database import SessionLocal
+        from nlp.classifier import classify_text
+        db = SessionLocal()
+        
+        try:
+            # Fetch the un-processed complaints
+            complaints = ComplaintRepository.get_complaints_by_ids(db, complaint_ids)
+            
+            # Process each one
+            for complaint in complaints:
+                # 1. Clean the text
+                complaint.cleaned_description = process_text(complaint.description)
+                
+                # 2. Run Classification Intelligence
+                category, urgency, sentiment = classify_text(complaint.cleaned_description)
+                
+                # 3. Update the Database Entity
+                complaint.category = category
+                complaint.urgency = urgency
+                complaint.sentiment = sentiment
+                complaint.status = "PROCESSED"
+                
+            # Commit the changes to the database
+            db.commit()
+            print(f"Background NLP & Classification Task Finished for {len(complaint_ids)} complaints.")
+            
+        finally:
+            db.close()
 
     @staticmethod
     def get_complaint_by_id(db: Session, complaint_id: int):
