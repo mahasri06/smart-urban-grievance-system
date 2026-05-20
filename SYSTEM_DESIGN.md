@@ -45,7 +45,7 @@ graph TD
     NW -->|JSON Batch| FA
     OD -->|JSON Batch| FA
 
-    FA -->|Instant Write (Status: PENDING)| DB
+    FA -->|Instant Write - Status PENDING| DB
     FA -.->|Trigger| NLP
 
     NLP <-->|Read/Write| DB
