@@ -1,63 +1,40 @@
 from sqlalchemy.orm import Session
-
-from repositories.complaint_repository import ComplaintRepository
-
 from entities.complaint_entity import Complaint
-
 from dto.complaint_dto import ComplaintCreate
-
+from repositories.complaint_repository import ComplaintRepository
+from nlp.nlp_service import process_text
 
 class ComplaintService:
+    @staticmethod
+    def create_complaint(db: Session, complaint_in: ComplaintCreate):
+        # 1. Process NLP synchronously
+        cleaned_text = process_text(complaint_in.description)
+        
+        # 2. Create the complaint entity
+        new_complaint = Complaint(
+            title=complaint_in.title,
+            description=complaint_in.description,
+            cleaned_description=cleaned_text,
+            location=complaint_in.location,
+            status="PROCESSED"
+        )
+        # 3. Save it to database synchronously
+        saved_complaint = ComplaintRepository.create_complaint(db, new_complaint)
+        return saved_complaint
 
     @staticmethod
-    def create_complaint(
-        db: Session,
-        complaint_data: ComplaintCreate
-    ):
-
-        complaint = Complaint(
-
-            title=complaint_data.title,
-
-            description=complaint_data.description,
-
-            location=complaint_data.location
-        )
-
-        return ComplaintRepository.create_complaint(
-            db,
-            complaint
-        )
-    
-    @staticmethod
-    def get_complaints(db, page, size, sort , location=None, title=None):
-
-        return ComplaintRepository.get_complaints(
-            db,
-            page,
-            size,
-            sort,
-            location,
-            title
-        )
+    def get_complaint_by_id(db: Session, complaint_id: int):
+        return ComplaintRepository.get_complaint_by_id(db, complaint_id)
 
     @staticmethod
-    def get_complaint_by_id(
-        db: Session,
-        complaint_id: int
-    ):
+    def get_complaints(db: Session, page: int, size: int, location: str = None, title: str = None):
+        # Passing default sort 'latest' as controller defaults to it
+        return ComplaintRepository.get_complaints(db, page, size, "latest", location, title)
 
-        return ComplaintRepository.get_complaint_by_id(
-            db,
-            complaint_id
-        )
-    
     @staticmethod
-    def get_complaints_by_location(db):
-
+    def get_complaints_by_location(db: Session):
         return ComplaintRepository.complaints_by_location(db)
-    
-    @staticmethod
-    def get_top_locations(db, limit):
 
+    @staticmethod
+    def get_top_locations(db: Session, limit: int):
         return ComplaintRepository.top_locations(db, limit)

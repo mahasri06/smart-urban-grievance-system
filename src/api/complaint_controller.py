@@ -17,10 +17,12 @@ def create_complaint(
     db: Session = Depends(get_db)
 ):
 
-    return ComplaintService.create_complaint(
+    saved_complaint = ComplaintService.create_complaint(
         db,
         complaint
     )
+    
+    return saved_complaint
 
 
 @router.get("/complaints/{complaint_id}")
