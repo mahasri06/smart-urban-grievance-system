@@ -8,6 +8,8 @@ from services.complaint_service import ComplaintService
 
 from dto.complaint_dto import ComplaintCreate
 
+from typing import List
+
 router = APIRouter()
 
 
@@ -23,6 +25,19 @@ def create_complaint(
     )
     
     return saved_complaint
+
+
+@router.post("/complaints/bulk")
+def create_complaints_bulk(
+    complaints: List[ComplaintCreate],
+    db: Session = Depends(get_db)
+):
+    saved_complaints = ComplaintService.create_complaints_bulk(
+        db,
+        complaints
+    )
+    
+    return saved_complaints
 
 
 @router.get("/complaints/{complaint_id}")

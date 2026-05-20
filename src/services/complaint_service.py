@@ -23,6 +23,27 @@ class ComplaintService:
         return saved_complaint
 
     @staticmethod
+    def create_complaints_bulk(db: Session, complaints_in: list[ComplaintCreate]):
+        new_complaints = []
+        for complaint_in in complaints_in:
+            # 1. Process NLP synchronously for each
+            cleaned_text = process_text(complaint_in.description)
+            
+            # 2. Create the complaint entity
+            new_complaint = Complaint(
+                title=complaint_in.title,
+                description=complaint_in.description,
+                cleaned_description=cleaned_text,
+                location=complaint_in.location,
+                status="PROCESSED"
+            )
+            new_complaints.append(new_complaint)
+            
+        # 3. Save all to database synchronously in bulk
+        saved_complaints = ComplaintRepository.create_complaints_bulk(db, new_complaints)
+        return saved_complaints
+
+    @staticmethod
     def get_complaint_by_id(db: Session, complaint_id: int):
         return ComplaintRepository.get_complaint_by_id(db, complaint_id)
 
