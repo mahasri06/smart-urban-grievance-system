@@ -113,7 +113,7 @@ This is the core "brain" of the project, executing specific algorithms to extrac
 
 ---
 
-## 4. Scalability Reasoning (Interview Talking Points)
+## 4. Scalability Reasoning 
 
 - **Why a Layered Architecture?** By separating API Controllers from Business Logic (Services) and Database operations (Repositories), the system is loosely coupled. We can swap PostgreSQL for MongoDB later without touching the NLP code.
 - **Why Background Tasks over Synchronous APIs?** Synchronous NLP processing would block the web server, limiting us to a few requests per second. Background processing allows us to scale ingestion infinitely while processing text at a safe, controlled rate.
