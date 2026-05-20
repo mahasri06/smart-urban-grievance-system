@@ -57,10 +57,61 @@ src/
 
 As we evolve from manual entry to full automation, our immediate engineering goals are:
 
-1. **[COMPLETED] Batch Ingestion Pipeline:** Implement `/complaints/bulk` endpoints with bulk SQLAlchemy insertions to handle high-volume data streams from the scraper pipeline.
-2. **[IN PROGRESS] Asynchronous Processing:** Offload the heavy NLP and Data Mining tasks (TF-IDF, PageRank) to background workers (e.g., Celery or FastAPI BackgroundTasks) to keep ingestion APIs responsive.
-3. **[PLANNED] Predictive Analytics Integration:** Connect the sequential pattern mining algorithms to our historical database to generate predictive alerts for cascading failures.
-4. **[PLANNED] Advanced Filtering & Geolocation:** Enhance our geospatial queries using PostGIS to deliver precise heatmaps for the municipal dashboard.
+1. **[COMPLETED] Batch Ingestion Pipeline:** Implement `/complaints/bulk` endpoints with bulk SQLAlchemy insertions.
+2. **[COMPLETED] Asynchronous Processing:** Offload the heavy NLP and Data Mining tasks to FastAPI `BackgroundTasks`.
+3. **[COMPLETED] Classification Intelligence:** Integrate Naive Bayes classification mock for automated Category, Urgency, and Sentiment tagging.
+4. **[PLANNED] Predictive Analytics Integration:** Connect the sequential pattern mining algorithms.
+5. **[PLANNED] Advanced Filtering & Geolocation:** Enhance our geospatial queries using PostGIS.
+
+---
+
+## 🧠 Machine Learning Pipeline (Under the Hood)
+
+To ensure this system is "Intelligent", we follow a rigorous Machine Learning training and prediction lifecycle for our classifiers (like Naive Bayes). Here is a step-by-step breakdown of how the ML model is trained and how it predicts accuracy:
+
+### Phase 1: Data Collection & Preprocessing
+- **Step 1:** Collect historical data (e.g., thousands of past civic complaints).
+- **Step 2:** Human experts manually label this data (e.g., tagging a tweet as `Category: Water`, `Urgency: HIGH`).
+- **Step 3 (NLP):** We pass this text through our NLP pipeline to lowercase it, remove punctuation, and remove "stopwords" (common words like *is, the, and* that hold no analytical value).
+
+### Phase 2: Feature Extraction (TF-IDF)
+Machine learning models cannot read English text; they only understand numbers.
+- **Step 4:** We use **TF-IDF (Term Frequency - Inverse Document Frequency)** to convert the cleaned text into a massive matrix of numbers. It gives a high mathematical weight to rare, important words (like "pothole" or "pipe") and low weight to common words.
+
+### Phase 3: Model Training
+- **Step 5 (Splitting):** We split our dataset. 80% is used for training, and 20% is hidden away for testing.
+- **Step 6 (Training):** We feed the 80% TF-IDF data into our **Multinomial Naive Bayes** algorithm. The model learns probabilities (e.g., "If I see the word 'pothole', there is a 95% probability the category is 'Roads'").
+
+### Phase 4: Predicting Accuracy & Evaluation
+- **Step 7 (Testing):** We take the hidden 20% of data (which the model has never seen) and ask the model to predict the categories.
+- **Step 8 (Accuracy Scoring):** Since we already know the true human labels for the 20% testing data, we compare them against the model's predictions. If the model predicted 900 out of 1000 correctly, our system achieves **90% Accuracy**. We also look at a **Confusion Matrix** to see if it accidentally confuses "Water" issues with "Electricity" issues.
+
+---
+
+## 📊 System Architecture Visualization
+
+Here is exactly how data flows through our current implementation:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Pipeline as Data Pipeline (Scrapers)
+    participant API as FastAPI Ingestion
+    participant DB as PostgreSQL DB
+    participant ML as Background ML Worker
+
+    Pipeline->>API: POST /complaints/bulk
+    API->>DB: Instant Save (Status: PENDING)
+    DB-->>API: Success
+    API-->>Pipeline: HTTP 200 OK (Instant Response)
+    
+    Note over API, ML: -- Asynchronous Boundary --
+    
+    API-)ML: Trigger Task
+    ML->>DB: Fetch PENDING rows
+    Note over ML: 1. Clean Text (NLP)<br/>2. Classify (Category/Urgency)<br/>3. Analyze Sentiment
+    ML->>DB: Update rows (Status: PROCESSED)
+```
 
 ---
 
