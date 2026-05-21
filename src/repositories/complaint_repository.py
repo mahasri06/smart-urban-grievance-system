@@ -27,11 +27,13 @@ class ComplaintRepository:
     ):
         """
         Efficiently inserts a list of complaints into the database.
+        Refreshes each object so that auto-generated IDs are populated
+        before the caller reads them (needed by the background task).
         """
         db.add_all(complaints)
         db.commit()
-        # Note: We typically don't refresh all objects after a bulk insert 
-        # unless absolutely necessary to save database roundtrips.
+        for complaint in complaints:
+            db.refresh(complaint)
         return complaints
 
     @staticmethod
