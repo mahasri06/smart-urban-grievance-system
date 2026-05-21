@@ -45,22 +45,3 @@ def pipeline_runner(tweet_text):
         "method": "Default Fallback"
     }
 
-
-# --- THE MAIN GATEWAY ---
-if __name__ == "__main__":
-    print("🚀 Civic Pulse Location Engine Activated!")
-    
-    # Test Case A: Should trip Approach 1 instantly using your fuzzy match rules
-    post_a = "Massive traffic gridlock over near velacheryy junction!"
-    result_a = pipeline_runner(post_a)
-    print("📦 FINAL PACKET SAVED TO DATABASE:")
-    print(result_a)
-    
-    print("-" * 60)
-    time.sleep(1) # Safety gap
-    
-    # Test Case B: Will fail Approach 1, but succeed on Approach 2 with the landmark lookup
-    post_b = "Water pipe leakage flooding roads right near Phoenix Mall"
-    result_b = pipeline_runner(post_b)
-    print("📦 FINAL PACKET SAVED TO DATABASE:")
-    print(result_b)

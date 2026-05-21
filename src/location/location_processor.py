@@ -26,7 +26,7 @@ def find_best_fuzzy_match(word):
 
 
 def misaligned_location(text_phrase):
-    found_area = "Unknown / General Chennai"
+    found_area = "Unknown"
     lat = 13.0827
     lng = 80.2707
 
