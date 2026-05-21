@@ -3,78 +3,96 @@ from entities.complaint_entity import Complaint
 from dto.complaint_dto import ComplaintCreate
 from repositories.complaint_repository import ComplaintRepository
 from nlp.nlp_service import process_text
+from nlp.classifier import classify_text
+
 
 class ComplaintService:
+
     @staticmethod
     def create_complaint(db: Session, complaint_in: ComplaintCreate):
-        # 1. Process NLP synchronously
+        """Single complaint — processed synchronously and returned immediately."""
+
+        # 1. NLP preprocessing
         cleaned_text = process_text(complaint_in.description)
-        
-        # 2. Create the complaint entity
+
+        # 2. Classification (category, urgency, sentiment)
+        category, urgency, sentiment = classify_text(cleaned_text)
+
+        # 3. Build entity
         new_complaint = Complaint(
             title=complaint_in.title,
             description=complaint_in.description,
             cleaned_description=cleaned_text,
             location=complaint_in.location,
-            status="PROCESSED"
+            category=category,
+            urgency=urgency,
+            sentiment=sentiment,
+            status="PROCESSED",
         )
-        # 3. Save it to database synchronously
-        saved_complaint = ComplaintRepository.create_complaint(db, new_complaint)
-        return saved_complaint
+
+        # 4. Persist
+        return ComplaintRepository.create_complaint(db, new_complaint)
 
     @staticmethod
-    def create_complaints_bulk(db: Session, complaints_in: list[ComplaintCreate], background_tasks):
-        new_complaints = []
-        for complaint_in in complaints_in:
-            # 2. Create the complaint entity without cleaning the text yet
-            new_complaint = Complaint(
-                title=complaint_in.title,
-                description=complaint_in.description,
-                location=complaint_in.location,
-                status="PENDING_ANALYSIS"
-            )
-            new_complaints.append(new_complaint)
-            
-        # 3. Save all to database synchronously in bulk (Very fast)
-        saved_complaints = ComplaintRepository.create_complaints_bulk(db, new_complaints)
-        
-        # 4. Schedule the heavy NLP processing in the background
-        complaint_ids = [c.id for c in saved_complaints]
-        background_tasks.add_task(ComplaintService.process_nlp_background, complaint_ids)
-        
-        return saved_complaints
-
-    @staticmethod
-    def process_nlp_background(complaint_ids: list[int]):
+    def create_complaints_bulk(
+        db: Session,
+        complaints_in: list[ComplaintCreate],
+        background_tasks,
+    ):
         """
-        This runs completely in the background after the API responds.
+        Bulk ingest — saves all complaints immediately with PENDING_ANALYSIS
+        status, then schedules NLP + classification as a background task.
+        This keeps the API response fast even for large batches.
+        """
+        new_complaints = [
+            Complaint(
+                title=c.title,
+                description=c.description,
+                location=c.location,
+                status="PENDING_ANALYSIS",
+            )
+            for c in complaints_in
+        ]
+
+        saved = ComplaintRepository.create_complaints_bulk(db, new_complaints)
+
+        # IDs are populated after bulk insert + refresh (fixed in repository)
+        complaint_ids = [c.id for c in saved]
+        background_tasks.add_task(ComplaintService._process_nlp_background, complaint_ids)
+
+        return saved
+
+    @staticmethod
+    def _process_nlp_background(complaint_ids: list[int]):
+        """
+        Background task: runs NLP + classification on a batch of complaints
+        that were saved with PENDING_ANALYSIS status.
+        Opens its own DB session since FastAPI's request session is closed.
         """
         from database.database import SessionLocal
-        from nlp.classifier import classify_text
+
         db = SessionLocal()
-        
         try:
-            # Fetch the un-processed complaints
             complaints = ComplaintRepository.get_complaints_by_ids(db, complaint_ids)
-            
-            # Process each one
+
             for complaint in complaints:
-                # 1. Clean the text
-                complaint.cleaned_description = process_text(complaint.description)
-                
-                # 2. Run Classification Intelligence
-                category, urgency, sentiment = classify_text(complaint.cleaned_description)
-                
-                # 3. Update the Database Entity
+                cleaned = process_text(complaint.description)
+                category, urgency, sentiment = classify_text(cleaned)
+
+                complaint.cleaned_description = cleaned
                 complaint.category = category
                 complaint.urgency = urgency
                 complaint.sentiment = sentiment
                 complaint.status = "PROCESSED"
-                
-            # Commit the changes to the database
+
             db.commit()
-            print(f"Background NLP & Classification Task Finished for {len(complaint_ids)} complaints.")
-            
+            print(
+                f"[Background NLP] Processed {len(complaints)} complaints "
+                f"(IDs: {complaint_ids})"
+            )
+        except Exception as e:
+            print(f"[Background NLP] Error: {e}")
+            db.rollback()
         finally:
             db.close()
 
@@ -83,8 +101,13 @@ class ComplaintService:
         return ComplaintRepository.get_complaint_by_id(db, complaint_id)
 
     @staticmethod
-    def get_complaints(db: Session, page: int, size: int, location: str = None, title: str = None):
-        # Passing default sort 'latest' as controller defaults to it
+    def get_complaints(
+        db: Session,
+        page: int,
+        size: int,
+        location: str = None,
+        title: str = None,
+    ):
         return ComplaintRepository.get_complaints(db, page, size, "latest", location, title)
 
     @staticmethod

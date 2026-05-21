@@ -1,20 +1,14 @@
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import requests
 from email.utils import parsedate_to_datetime
 from time import sleep
 
-import requests
-
-from normalizers.reddit_normalizer import (
-    normalize_reddit_post
-)
-
-from processors.filter import (
-    is_relevant,
-    detect_categories
-)
-
-from processors.scoring import (
-    calculate_severity
-)
+from scraper.normalizers.reddit_normalizer import normalize_reddit_post
+from scraper.processors.filter import is_relevant, detect_categories
+from scraper.processors.scoring import calculate_severity
 
 
 HEADERS = {

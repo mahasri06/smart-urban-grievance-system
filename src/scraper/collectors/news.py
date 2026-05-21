@@ -1,16 +1,12 @@
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import feedparser
 
-from normalizers.news_normalizer import (
-    normalize_news_article,
-    enrich_news_article
-)
-from processors.filter import (
-    is_relevant,
-    detect_categories
-)
-from processors.scoring import (
-    calculate_severity
-)
+from scraper.normalizers.news_normalizer import normalize_news_article, enrich_news_article
+from scraper.processors.filter import is_relevant, detect_categories
+from scraper.processors.scoring import calculate_severity
 
 USER_AGENT = "civicpulse-project/1.0"
 
