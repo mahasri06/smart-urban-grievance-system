@@ -1,4 +1,5 @@
 import feedparser
+import asyncio
 
 from normalizers.news_normalizer import (
     normalize_news_article,
@@ -25,10 +26,10 @@ RSS_FEEDS = {
     )
 }
 
-def fetch_rss_items(source, url):
+async def fetch_rss_items(source, url):
 
     try:
-        feed = feedparser.parse(url, agent=USER_AGENT)
+        feed = await asyncio.to_thread(feedparser.parse, url, agent=USER_AGENT)
 
         items = []
         for entry in feed.entries:
@@ -55,49 +56,56 @@ def fetch_rss_items(source, url):
                 "pubDate": pub_date
             })
 
-        return items[:5]
+        return items[:100]
 
     except Exception as e:
         print(f"Error fetching RSS from {source}: {e}")
         return []
 
 
-def run():
+async def run():
     all_articles = []
-    reports = []
 
     for source, url in RSS_FEEDS.items():
-        articles = fetch_rss_items(source, url)
+        articles = await fetch_rss_items(source, url)
         all_articles.extend(articles)
         print(f"Found {len(articles)} raw headlines.")
 
+    # concurrent article downloads
+    tasks = []
     for raw_article in all_articles:
         report = normalize_news_article(raw_article)
 
-        if not is_relevant(report["title"].lower()):
-            continue
+        if is_relevant(report["title"].lower()):
+            tasks.append(enrich_news_article(report))
 
-        # fill in body
-        report = enrich_news_article(report)
+    enriched_reports = await asyncio.gather(*tasks)
+    
 
+    def process_single_report(report):
         categories = detect_categories(report["full_text"])
-
         severity_score = calculate_severity(
             report["full_text"],
             categories=categories
         )
-
         report["categories"] = categories
         report["severity_score"] = severity_score
+        return report
 
-        reports.append(report)
+    # Off the engine to threads
+    processing_tasks = [
+        asyncio.to_thread(process_single_report, r)
+        for r in enriched_reports
+    ]
+
+    reports = await asyncio.gather(*processing_tasks)
 
     return reports
 
 
-def fetch_and_process():
-    return run()
+async def fetch_and_process():
+    return await run()
 
 
 if __name__ == "__main__":
-    run()
+    reports = asyncio.run(run())

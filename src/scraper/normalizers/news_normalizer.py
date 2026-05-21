@@ -1,5 +1,5 @@
+import asyncio
 import requests
-
 from googlenewsdecoder import gnewsdecoder
 from newspaper import Article, Config
 
@@ -74,16 +74,11 @@ def normalize_news_article(article):
     }
 
 
-def enrich_news_article(report):
+async def enrich_news_article(report):
 
-    body = fetch_article_body(
-        report["url"]
-    )
+    body = await asyncio.to_thread(fetch_article_body, report["url"])
 
     report["body"] = body
-
-    report["full_text"] = (
-        f"{report['title']} {body}"
-    ).lower().strip()
+    report["full_text"] = f"{report['title']} {body}".lower().strip()
 
     return report

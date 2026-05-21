@@ -1,7 +1,7 @@
+import asyncio
 from email.utils import parsedate_to_datetime
-from time import sleep
 
-import requests
+import httpx
 
 from normalizers.reddit_normalizer import (
     normalize_reddit_post
@@ -24,7 +24,7 @@ HEADERS = {
 }
 
 
-def fetch_recent_posts():
+async def fetch_recent_posts(client):
 
     url = (
         "https://www.reddit.com/"
@@ -33,7 +33,7 @@ def fetch_recent_posts():
 
     try:
 
-        response = requests.get(
+        response = await client.get(
             url,
             headers=HEADERS,
             timeout=10
@@ -81,7 +81,7 @@ def fetch_recent_posts():
                     f"Retry after {wait_seconds} seconds."
                 )
 
-                sleep(wait_seconds)
+                await asyncio.sleep(wait_seconds)
 
         response.raise_for_status()
 
@@ -93,42 +93,35 @@ def fetch_recent_posts():
         return []
 
 
-def run():
-
-    posts = fetch_recent_posts()
+async def run():
     reports = []
 
-    for raw_post in posts:
-        report = normalize_reddit_post(
-            raw_post
-        )
+    async with httpx.AsyncClient() as client:
+        posts = await fetch_recent_posts(client)
 
-        if not is_relevant(report["title"]):
-            continue
+        def process_post(raw_post):
+            report = normalize_reddit_post(raw_post)
+            if not is_relevant(report["title"].lower()):
+                return None
+            
+            categories = detect_categories(report["full_text"])
+            severity_score = calculate_severity(report["full_text"], categories)
 
-        categories = detect_categories(
-            report["full_text"]
-        )
+            report["categories"] = categories
+            report["severity_score"] = severity_score
+            return report
+        
+        tasks = [asyncio.to_thread(process_post, post) for post in posts]
+        results = await asyncio.gather(*tasks)
 
-        severity_score = calculate_severity(
-            report["full_text"],
-            categories
-        )
-
-        report["categories"] = categories
-
-        report["severity_score"] = (
-            severity_score
-        )
-
-        reports.append(report)
+        reports = [r for r in results if r is not None]
 
     return reports
 
 
-def fetch_and_process():
-    return run()
+async def fetch_and_process():
+    return await run()
 
 
 if __name__ == "__main__":
-    run()
+    reports = asyncio.run(run())

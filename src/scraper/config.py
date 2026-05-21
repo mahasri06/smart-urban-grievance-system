@@ -189,21 +189,3 @@ QUESTION_TERMS = [
     "clarification",
     "feedback"
 ]
-
-CHENNAI_LOCALITIES = [
-    "Adyar", "Adambakkam", "Alwarpet", "Ambattur", "Aminjikarai", "Anna Nagar", 
-    "Ashok Nagar", "Avadi", "Besant Nagar", "Chromepet", "Chetpet", "Choolaimedu", 
-    "Egmore", "Ekkattuthangal", "Guindy", "Iyyappanthangal", "Jafferkhanpet", 
-    "Kandanchavadi", "Kattupakkam", "Kilkattalai", "Kilpauk", "Kodambakkam", 
-    "Kottivakkam", "Kotturpuram", "Kovilambakkam", "Koyambedu", "Kundrathur", 
-    "Madipakkam", "Maduravoyal", "Manapakkam", "Mandaveli", "Mangadu", "Mogappair", 
-    "Mylapore", "Nandanam", "Nanganallur", "Navallur", "Neelankarai", "Nungambakkam", 
-    "Padi", "Palavakkam", "Pallavaram", "Pallikaranai", "Pammal", "Park Town", 
-    "Parrys", "Pattabiram", "Pattalam", "Perambur", "Perungudi", "Poonamallee", 
-    "Porur", "Purasaiwakkam", "Puzhal", "Puzhuthivakkam", "Ramapuram", "Royapettah", 
-    "Royapuram", "Saidapet", "Santhome", "Selaiyur", "Sholinganallur", "Sowcarpet", 
-    "T. Nagar", "T Nagar", "Teynampet", "Thiruvanmiyur", "Thoraipakkam", "Tirusulam", 
-    "Tiruvottiyur", "Triplicane", "Ullagaram", "Vadapalani", "Valasaravakkam", 
-    "Vandalur", "Velachery", "Vepery", "Villivakkam", "Virugambakkam", "Washermenpet", 
-    "West Mambalam", "OMR", "ECR", "Old Mahabalipuram Road", "East Coast Road"
-]
