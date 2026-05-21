@@ -13,4 +13,14 @@ class Complaint(Base):
 
     description = Column(String)
 
+    cleaned_description = Column(String, nullable=True)
+
     location = Column(String)
+
+    status = Column(String, default="PENDING")
+
+    category = Column(String, nullable=True)
+
+    urgency = Column(String, nullable=True)
+
+    sentiment = Column(String, nullable=True)

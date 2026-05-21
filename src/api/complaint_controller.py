@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 
 from sqlalchemy.orm import Session
 
@@ -7,6 +7,8 @@ from database.dependencies import get_db
 from services.complaint_service import ComplaintService
 
 from dto.complaint_dto import ComplaintCreate
+
+from typing import List
 
 router = APIRouter()
 
@@ -17,10 +19,27 @@ def create_complaint(
     db: Session = Depends(get_db)
 ):
 
-    return ComplaintService.create_complaint(
+    saved_complaint = ComplaintService.create_complaint(
         db,
         complaint
     )
+    
+    return saved_complaint
+
+
+@router.post("/complaints/bulk")
+def create_complaints_bulk(
+    complaints: List[ComplaintCreate],
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    saved_complaints = ComplaintService.create_complaints_bulk(
+        db,
+        complaints,
+        background_tasks
+    )
+    
+    return saved_complaints
 
 
 @router.get("/complaints/{complaint_id}")

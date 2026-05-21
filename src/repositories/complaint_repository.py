@@ -21,6 +21,20 @@ class ComplaintRepository:
         return complaint
 
     @staticmethod
+    def create_complaints_bulk(
+        db: Session,
+        complaints: list[Complaint]
+    ):
+        """
+        Efficiently inserts a list of complaints into the database.
+        """
+        db.add_all(complaints)
+        db.commit()
+        # Note: We typically don't refresh all objects after a bulk insert 
+        # unless absolutely necessary to save database roundtrips.
+        return complaints
+
+    @staticmethod
     def get_complaint_by_id(
         db: Session,
         complaint_id: int
@@ -31,6 +45,18 @@ class ComplaintRepository:
             .filter(Complaint.id == complaint_id)
             .first()
         )
+
+    @staticmethod
+    def get_complaints_by_ids(
+        db: Session,
+        complaint_ids: list[int]
+    ):
+        return (
+            db.query(Complaint)
+            .filter(Complaint.id.in_(complaint_ids))
+            .all()
+        )
+    
     
     
     @staticmethod
