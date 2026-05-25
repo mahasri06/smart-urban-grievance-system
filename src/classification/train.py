@@ -28,7 +28,7 @@ from sklearn.metrics import classification_report
 # ---------------------------------------------------------------------------
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_PATH = os.path.join(BASE_DIR, "data", "synthetic_complaints.csv")
+DATA_PATH = os.path.join(BASE_DIR, "data", "real_complaints.csv")
 MODELS_DIR = os.path.join(BASE_DIR, "models")
 
 CATEGORY_MODEL_PATH = os.path.join(MODELS_DIR, "category_classifier.pkl")
