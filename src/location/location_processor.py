@@ -2,7 +2,39 @@ import re
 from difflib import SequenceMatcher
 from geopy.geocoders import Nominatim
 
-CHENNAI_AREAS = ["T-Nagar", "Velachery", "Adyar", "Mylapore", "Tambaram", "Anna Nagar", "Central"]
+CHENNAI_AREAS = [
+    # --- CENTRAL CHENNAI ---
+    "T-Nagar", "Thyagaraya Nagar", "Anna Nagar", "Mylapore", "Alwarpet", "Teynampet",
+    "Nungambakkam", "Egmore", "Royapettah", "Kilpauk", "Kodambakkam", "Vadapalani",
+    "Ashok Nagar", "West Mambalam", "Saidapet", "Choolaimedu", "Chetpet", "Gopalapuram",
+    "Triplicane", "Chepauk", "Chintadripet", "Purusawalkam", "Sowcarpet", "Broadway",
+    "Parrys", "Central", "Royapuram", "Vepery", "Choolai", "Aminjikarai", "Arumbakkam",
+
+    # --- SOUTH CHENNAI & IT CORRIDOR ---
+    "Adyar", "Velachery", "Besant Nagar", "Thiruvanmiyur", "Kotturpuram", "Guindy",
+    "Ekkattuthangal", "Nandanam", "Sholinganallur", "Thoraipakkam", "Perungudi",
+    "Karapakkam", "Palavakkam", "Kottivakkam", "Neelankarai", "Injambakkam", "Madipakkam",
+    "Ullagaram", "Puzhuthivakkam", "Pallikaranai", "Medavakkam", "Keelkattalai", 
+    "Kovilambakkam", "Sithalapakkam", "Perumbakkam", "Taramani", "Kanagam",
+
+    # --- SOUTH SUBURBS & EXTENSIONS ---
+    "Tambaram", "East Tambaram", "West Tambaram", "Chromepet", "Pallavaram", "Alandur",
+    "Nanganallur", "Adambakkam", "Chitlapakkam", "Selaiyur", "Sembakkam", "Rajakilpakkam",
+    "Vandalur", "Perungalathur", "Mudichur", "Gowrivakkam", "Hasthinapuram",
+
+    # --- WEST CHENNAI & INDUSTRIAL HUBS ---
+    "Ambattur", "Avadi", "Koyambedu", "Maduravoyal", "Porur", "Valasaravakkam",
+    "Virugambakkam", "Saligramam", "Ramapuram", "Mugalivakkam", "Manapakkam",
+    "Nandambakkam", "Nerkundram", "Nolambur", "Mogappair", "Padi", "Korattur",
+    "Villivakkam", "Ayanavaram", "Kolathur", "Thiru-Vi-Ka-Nagar", "Iyyappanthanthangal",
+    "Poonamallee", "Kattupakkam", "Mangadu", "Vanagaram",
+
+    # --- NORTH CHENNAI ---
+    "Tondiarpet", "Washermanpet", "Old Washermanpet", "New Washermanpet", "Vyasarpadi",
+    "Perambur", "Sembium", "Erukkanchery", "Kodungaiyur", "Madhavaram", "Mathur",
+    "Puzhal", "Thiruvottiyur", "Ennore", "Ernavoor", "Manali", "Chinnasekkadu",
+    "Kasimedu", "Korukkupet", "Basin Bridge", "Mint"
+]
 
 geolocator = Nominatim(user_agent="my_civic_pulse_app_v1")
 

@@ -1,0 +1,72 @@
+.App {
+  min-height: 100vh;
+  position: relative;
+}
+
+.viewspace-container {
+  min-height: 100vh;
+  display: flex;
+}
+
+.view-toggle {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 1100;
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 18px;
+  background: rgba(8, 6, 13, 0.88);
+  color: #fff;
+  font: inherit;
+  text-transform: lowercase;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+}
+
+.dashboard-panel {
+  min-height: 100vh;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at top, rgba(170, 59, 255, 0.14), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.95));
+}
+
+.dashboard-panel h1 {
+  margin: 0;
+  text-transform: lowercase;
+}
+
+.login-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  background: rgba(8, 6, 13, 0.42);
+  backdrop-filter: blur(8px);
+}
+
+.login-modal-card {
+  min-width: 280px;
+  padding: 22px 26px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--text-h);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.login-modal-title {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.login-modal-text {
+  margin: 0;
+  color: var(--text);
+}
