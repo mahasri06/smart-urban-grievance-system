@@ -44,7 +44,7 @@ def _load_models():
             _urgency_model = None
     else:
         print("[Classifier] Model files not found. Using keyword fallback.")
-        print("  → Run: cd src && python classification/train.py")
+        print("  -> Run: cd src && python classification/train.py")
 
 _load_models()
 

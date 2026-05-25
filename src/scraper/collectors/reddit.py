@@ -21,8 +21,9 @@ HEADERS = {
 def fetch_recent_posts():
 
     url = (
-        "https://www.reddit.com/"
-        "r/chennai/new.json?limit=100"
+        "https://www.reddit.com/r/chennai/search.json?"
+        "q=water OR power OR road OR flood OR garbage OR traffic OR pothole"
+        "&restrict_sr=on&sort=new&limit=100"
     )
 
     try:
