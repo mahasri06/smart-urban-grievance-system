@@ -406,7 +406,6 @@ smart_grievance_system/
 
 - Python 3.10+
 - PostgreSQL running locally
-- Reddit API credentials — [create an app here](https://www.reddit.com/prefs/apps)
 
 ### 1. Clone the repository
 
@@ -445,9 +444,6 @@ Edit `.env` with your values:
 
 ```env
 DATABASE_URL=postgresql://postgres:yourpassword@localhost:5432/smart_grievance_db
-REDDIT_CLIENT_ID=your_client_id
-REDDIT_CLIENT_SECRET=your_client_secret
-REDDIT_USER_AGENT=SmartGrievanceBot/1.0
 ```
 
 ### 6. Create the database
