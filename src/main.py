@@ -1,4 +1,5 @@
 from fastapi import FastAPI, BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware
 
 from database.database import engine, Base
 
@@ -16,6 +17,14 @@ app = FastAPI(
         "using NLP, Naive Bayes, and web data mining techniques."
     ),
     version="1.0.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Create all tables on startup
@@ -38,7 +47,8 @@ def trigger_scraper(background_tasks: BackgroundTasks):
     """
     def _run_scraper():
         from scraper.main import scrape_and_store
-        scrape_and_store()
+        import asyncio
+        asyncio.run(scrape_and_store())
 
     background_tasks.add_task(_run_scraper)
     return {"message": "Unified scraper (Reddit + News) started in background. Check server logs for progress."}
@@ -97,7 +107,7 @@ def score_credibility(background_tasks: BackgroundTasks):
     background_tasks.add_task(_run_scoring)
     return {"message": "PageRank scoring started in background."}
 
-
+# route to fetch the DB posts
 @app.get("/analytics/scraped-posts", tags=["Analytics"])
 def get_scraped_posts(
     min_credibility: float = 0.0,
@@ -106,6 +116,18 @@ def get_scraped_posts(
     """Return scraped posts, optionally filtered by minimum credibility score."""
     from database.database import SessionLocal
     from repositories.scraped_post_repository import ScrapedPostRepository
+    from location.location_processor import misaligned_location
+    from entities.complaint_entity import Complaint
+
+    def _resolve_coords(location_name, lat_value=None, lng_value=None):
+        if lat_value is not None and lng_value is not None:
+            return lat_value, lng_value
+        if not location_name:
+            return None, None
+        result = misaligned_location(location_name)
+        if result.get("location_name") == "Unknown":
+            return None, None
+        return result.get("latitude"), result.get("longitude")
 
     db = SessionLocal()
     try:
@@ -114,22 +136,60 @@ def get_scraped_posts(
         else:
             posts = ScrapedPostRepository.get_all(db)
 
-        return [
-            {
+        complaints = (
+            db.query(Complaint)
+            .filter(Complaint.status == "PROCESSED")
+            .order_by(Complaint.id.desc())
+            .limit(limit)
+            .all()
+        )
+
+        result = []
+        for p in posts[:limit]:
+            lat, lng = _resolve_coords(p.location, p.lat, p.lng)
+            result.append({
                 "id": p.id,
                 "source": p.source,
-                "subreddit": p.subreddit,
                 "title": p.title,
+                "description": p.description,
+                "cleaned_text": p.cleaned_text,
                 "location": p.location,
+                "lat": lat,
+                "lng": lng,
                 "category": p.category,
                 "urgency": p.urgency,
                 "sentiment": p.sentiment,
-                "upvotes": p.upvotes,
-                "num_comments": p.num_comments,
                 "credibility_score": p.credibility_score,
+                "scraped_at": p.scraped_at.isoformat() if p.scraped_at else None,
                 "url": p.url,
-            }
-            for p in posts[:limit]
-        ]
+            })
+
+        for c in complaints:
+            lat, lng = _resolve_coords(c.location, c.lat, c.lng)
+            result.append({
+                "id": c.id,
+                "source": c.source or "citizen",
+                "title": c.title,
+                "description": c.description,
+                "cleaned_text": c.cleaned_text,
+                "location": c.location,
+                "lat": lat,
+                "lng": lng,
+                "category": c.category,
+                "urgency": c.urgency,
+                "sentiment": c.sentiment,
+                "credibility_score": None,
+                "scraped_at": c.created_at.isoformat() if c.created_at else None,
+                "url": None,
+            })
+
+        source_priority = {"citizen": 0, "reddit": 1, "news": 2}
+        result.sort(key=lambda item: (
+            {"HIGH": 0, "MEDIUM": 1, "LOW": 2}.get(item.get("urgency"), 3),
+            source_priority.get(item.get("source"), 9),
+            item.get("id", 0),
+        ))
+
+        return result[:limit]
     finally:
         db.close()

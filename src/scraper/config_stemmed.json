@@ -1,0 +1,62 @@
+{
+  "EMERGENCY": [
+    "fire",
+    "collapse",
+    "explosion",
+    "accident",
+    "injury",
+    "death",
+    "unsafe",
+    "hazard"
+  ],
+  "SANITATION": [
+    "garbage",
+    "trash",
+    "waste",
+    "sewage",
+    "drain",
+    "water",
+    "toilet",
+    "mosquito",
+    "smell"
+  ],
+  "INFRASTRUCTURE": [
+    "pothole",
+    "road",
+    "bridge",
+    "flyover",
+    "footpath",
+    "pavement",
+    "subway",
+    "streetlight",
+    "pole",
+    "transformer",
+    "encroachment",
+    "construction"
+  ],
+  "UTILITIES": [
+    "power",
+    "electricity",
+    "water",
+    "pipe",
+    "contaminated"
+  ],
+  "TRANSPORT": [
+    "traffic",
+    "signal",
+    "bus",
+    "metro",
+    "parking",
+    "road",
+    "closed"
+  ],
+  "PUBLIC_HEALTH": [
+    "dengue",
+    "malaria",
+    "dog",
+    "animal",
+    "pollution",
+    "smoke",
+    "toxic"
+  ]
+}

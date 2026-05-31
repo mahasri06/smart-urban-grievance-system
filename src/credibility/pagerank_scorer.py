@@ -14,9 +14,9 @@ How it works:
   5. Normalise scores to [0, 1] and store them in the DB.
 
 Posts with high credibility scores are ones that:
-  - Are corroborated by many other posts about the same issue
-  - Have high engagement (upvotes + comments)
-  - Are connected to other high-credibility posts
+    - Are corroborated by many other posts about the same issue
+    - Are connected to other high-credibility posts
+    - Can optionally use engagement if available (defaults to 0 when absent)
 
 Usage:
     from credibility.pagerank_scorer import run_pagerank_scoring

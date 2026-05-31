@@ -23,7 +23,7 @@ def create_complaint(
         db,
         complaint
     )
-    
+
     return saved_complaint
 
 
@@ -38,7 +38,7 @@ def create_complaints_bulk(
         complaints,
         background_tasks
     )
-    
+
     return saved_complaints
 
 
