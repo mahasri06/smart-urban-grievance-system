@@ -31,7 +31,6 @@ from entities.scraped_post_entity import ScrapedPost
 from repositories.scraped_post_repository import ScrapedPostRepository
 from patterns.association_miner import run_association_mining
 from patterns.sequential_miner import run_sequential_mining
-from credibility.pagerank_scorer import run_pagerank_scoring
 
 # ---------------------------------------------------------------------------
 # Page config
@@ -511,33 +510,10 @@ elif page == "🌐 Scraped Data":
         st.stop()
 
     # KPI row
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3 = st.columns(3)
     col1.metric("Total Posts", len(df))
     col2.metric("Sources", df["source"].nunique())
     col3.metric("Locations Found", df[df["location"] != "Unknown"]["location"].nunique())
-    scored = df[df["credibility_score"].notna()]
-    col4.metric("Scored Posts", len(scored))
-
-    st.markdown("---")
-
-    # Run PageRank button
-    col_btn, col_info = st.columns([1, 3])
-    with col_btn:
-        if st.button("⚡ Run PageRank Scoring"):
-            db = SessionLocal()
-            try:
-                with st.spinner("Running PageRank credibility scoring..."):
-                    scores = run_pagerank_scoring(db)
-                st.success(f"Scored {len(scores)} posts.")
-                st.cache_data.clear()
-                st.rerun()
-            finally:
-                db.close()
-    with col_info:
-        st.info(
-            "PageRank scores posts by how many other posts about the same issue "
-            "in the same location corroborate them. Higher score = more credible."
-        )
 
     st.markdown("---")
 

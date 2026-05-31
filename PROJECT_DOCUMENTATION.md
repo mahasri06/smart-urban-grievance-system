@@ -6,10 +6,9 @@ The **Smart Urban Grievance Redressal and Infrastructure Monitoring System** is 
 ## 2. System Architecture
 The system consists of a multi-tier architecture:
 - **Data Ingestion**: A REST API for explicit citizen complaints, plus web scrapers (Reddit, News) for implicit issue detection.
-- **NLP & Classification**: Complaints are cleaned and passed through a Naive Bayes classifier (trained on TF-IDF features) to determine the *Category* (e.g., Roads & Traffic, Flooding) and *Urgency* (HIGH, MEDIUM, LOW).
+- **NLP & Classification**: Complaints are cleaned and passed through a Logistic Regression classifier (trained on TF-IDF features) to determine the *Category* (e.g., Roads & Traffic, Flooding) and *Urgency* (HIGH, MEDIUM, LOW).
 - **Location Processing**: Uses an LLM Parser to extract specific locations and coordinates from unstructured text (Recent Feature).
 - **Data Mining**: Includes Association Rule Mining (Apriori) to detect co-occurring issues and Sequential Pattern Mining (PrefixSpan) for escalation chains.
-- **Credibility Scoring**: Uses a PageRank-based algorithm to score scraped posts based on engagement and corroboration.
 - **Frontend Dashboard**: A comprehensive Streamlit dashboard providing visual insights, heatmaps, and pattern alerts.
 
 ## 3. Newly Added Features
@@ -54,5 +53,5 @@ python scraper/main.py
 - **Backend:** FastAPI, Uvicorn, Python 3.10+
 - **Frontend:** Streamlit, Plotly
 - **Database:** PostgreSQL, SQLAlchemy ORM
-- **Machine Learning & NLP:** scikit-learn (Naive Bayes, TF-IDF), NLTK, mlxtend (Apriori), networkx (PageRank)
+- **Machine Learning & NLP:** scikit-learn (Logistic Regression, TF-IDF), NLTK, mlxtend (Apriori)
 - **Scraping:** PRAW (Reddit API), BeautifulSoup4 (News)
