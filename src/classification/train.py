@@ -95,7 +95,7 @@ def train_classifier(X: pd.Series, y: pd.Series, label: str) -> Pipeline:
         print(f"\n--- {name} ---")
         print(f"Macro F1-Score: {macro_f1:.4f}")
 
-        if macro_f1 > best_f1:
+        if macro_f1 > best_f1 or (macro_f1 == best_f1 and name == "Logistic Regression"):
             best_f1 = macro_f1
             best_pipeline = pipeline
             best_model_name = name
