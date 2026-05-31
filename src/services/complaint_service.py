@@ -22,7 +22,7 @@ class ComplaintService:
         new_complaint = Complaint(
             title=complaint_in.title,
             description=complaint_in.description,
-            cleaned_description=cleaned_text,
+            cleaned_text=cleaned_text,
             location=complaint_in.location,
             category=category,
             urgency=urgency,
@@ -79,7 +79,7 @@ class ComplaintService:
                 cleaned = process_text(complaint.description)
                 category, urgency, sentiment = classify_text(cleaned)
 
-                complaint.cleaned_description = cleaned
+                complaint.cleaned_text = cleaned
                 complaint.category = category
                 complaint.urgency = urgency
                 complaint.sentiment = sentiment

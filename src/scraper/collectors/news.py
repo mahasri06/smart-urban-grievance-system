@@ -2,6 +2,8 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import asyncio
+
 import feedparser
 
 from scraper.normalizers.news_normalizer import normalize_news_article, enrich_news_article
@@ -16,15 +18,15 @@ RSS_FEEDS = {
         "(pothole+OR+road+OR+garbage+OR+sewage+OR+drainage+OR+trash+OR+"
         "\"power+cut\"+OR+water+OR+flooding+OR+waterlogging+OR+traffic+OR+"
         "civic+OR+encroachment+OR+street+OR+infrastructure)"
-        "+when:1d"
+        "+when:7d"
         "&hl=en-IN&gl=IN&ceid=IN:en"
     )
 }
 
-def fetch_rss_items(source, url):
+async def fetch_rss_items(source, url):
 
     try:
-        feed = feedparser.parse(url, agent=USER_AGENT)
+        feed = await asyncio.to_thread(feedparser.parse, url, agent=USER_AGENT)
 
         items = []
         for entry in feed.entries:
@@ -51,49 +53,58 @@ def fetch_rss_items(source, url):
                 "pubDate": pub_date
             })
 
-        return items[:5]
+        return items
 
     except Exception as e:
         print(f"Error fetching RSS from {source}: {e}")
         return []
 
 
-def run():
+async def run():
     all_articles = []
     reports = []
 
-    for source, url in RSS_FEEDS.items():
-        articles = fetch_rss_items(source, url)
+    feed_tasks = [fetch_rss_items(source, url) for source, url in RSS_FEEDS.items()]
+    feed_results = await asyncio.gather(*feed_tasks)
+
+    for (source, _), articles in zip(RSS_FEEDS.items(), feed_results):
         all_articles.extend(articles)
-        print(f"Found {len(articles)} raw headlines.")
+        print(f"Found {len(articles)} raw headlines from {source}.")
 
-    for raw_article in all_articles:
-        report = normalize_news_article(raw_article)
+    semaphore = asyncio.Semaphore(8)
 
-        if not is_relevant(report["title"].lower()):
-            continue
+    async def process_article(raw_article):
+        async with semaphore:
+            report = normalize_news_article(raw_article)
+            report = await enrich_news_article(report)
 
-        # fill in body
-        report = enrich_news_article(report)
+            # Filter after enrichment so title-only articles do not get dropped
+            # before we inspect the decoded body text.
+            if not is_relevant(report["full_text"]):
+                return None
 
-        categories = detect_categories(report["full_text"])
+            categories = detect_categories(report["full_text"])
 
-        severity_score = calculate_severity(
-            report["full_text"],
-            categories=categories
-        )
+            severity_score = calculate_severity(
+                report["full_text"],
+                categories=categories
+            )
 
-        report["categories"] = categories
-        report["severity_score"] = severity_score
+            report["categories"] = categories
+            report["severity_score"] = severity_score
 
-        reports.append(report)
+            return report
+
+    if all_articles:
+        results = await asyncio.gather(*(process_article(article) for article in all_articles))
+        reports = [report for report in results if report]
 
     return reports
 
 
-def fetch_and_process():
-    return run()
+async def fetch_and_process():
+    return await run()
 
 
 if __name__ == "__main__":
-    run()
+    asyncio.run(run())

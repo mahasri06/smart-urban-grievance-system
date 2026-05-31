@@ -1,15 +1,15 @@
-import requests
+import asyncio
+import time
 
 from googlenewsdecoder import gnewsdecoder
 from newspaper import Article, Config
 
 
 def fetch_article_body(article_link):
-
     try:
         result = gnewsdecoder(
             article_link,
-            interval=1
+            interval=0.2
         )
 
         if not result.get("status"):
@@ -48,12 +48,10 @@ def fetch_article_body(article_link):
 
 
 def normalize_news_article(article):
-
     title = article.get("title", "")
     url = article.get("url", "")
 
     return {
-
         "source":
             article.get("source", "news"),
 
@@ -74,16 +72,13 @@ def normalize_news_article(article):
     }
 
 
-def enrich_news_article(report):
-
-    body = fetch_article_body(
-        report["url"]
-    )
+async def enrich_news_article(report):
+    start = time.perf_counter()
+    body = await asyncio.to_thread(fetch_article_body, report["url"])
+    elapsed = time.perf_counter() - start
+    print(f"[NewsNormalizer] fetched body in {elapsed:.2f}s for {report.get('url')[:80]}")
 
     report["body"] = body
-
-    report["full_text"] = (
-        f"{report['title']} {body}"
-    ).lower().strip()
+    report["full_text"] = f"{report['title']} {body}".lower().strip()
 
     return report

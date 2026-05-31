@@ -4,7 +4,7 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 
-# Make sure we have the stopwords downloaded locally
+# have the stopwords downloaded locally
 try:
     stop_words = set(stopwords.words('english'))
 except LookupError:

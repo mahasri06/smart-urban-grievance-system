@@ -92,14 +92,12 @@ def load_scraped_posts() -> pd.DataFrame:
         return pd.DataFrame([{
             "id": r.id,
             "source": r.source or "reddit",
-            "subreddit": r.subreddit or r.source or "—",
             "title": r.title,
+            "description": r.description,
             "location": r.location or "Unknown",
             "category": r.category or "Unknown",
             "urgency": r.urgency or "Unknown",
             "sentiment": r.sentiment or "NEUTRAL",
-            "upvotes": r.upvotes,
-            "num_comments": r.num_comments,
             "credibility_score": r.credibility_score,
             "url": r.url,
             "scraped_at": r.scraped_at,
@@ -558,9 +556,10 @@ elif page == "🌐 Scraped Data":
                     col_a.markdown(f"**Category:** {row['category']}")
                     col_a.markdown(f"**Urgency:** {row['urgency']}")
                     col_b.markdown(f"**Credibility Score:** {row['credibility_score']:.3f}")
-                    col_b.markdown(f"**Upvotes:** {row['upvotes']} | **Comments:** {row['num_comments']}")
+                    if row.get("description"):
+                        col_b.markdown(f"**Summary:** {row['description']}")
                     if row["url"]:
-                        col_b.markdown(f"[View on Reddit]({row['url']})")
+                        col_b.markdown(f"[View Source]({row['url']})")
 
         st.markdown("---")
 
@@ -606,7 +605,7 @@ elif page == "🌐 Scraped Data":
 
     # Full posts table
     st.subheader("All Scraped Posts")
-    display_cols = ["id", "source", "subreddit", "title", "location", "category",
-                    "urgency", "sentiment", "upvotes", "num_comments", "credibility_score"]
+    display_cols = ["id", "source", "title", "location", "category",
+                    "urgency", "sentiment", "credibility_score"]
     available_cols = [c for c in display_cols if c in df.columns]
     st.dataframe(df[available_cols], use_container_width=True, hide_index=True)

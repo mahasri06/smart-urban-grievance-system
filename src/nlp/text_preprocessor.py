@@ -1,5 +1,16 @@
 import re
 import unicodedata
+from nltk.stem import PorterStemmer
+
+_STEMMER = PorterStemmer()
+
+def normalize_for_keyword_matching(text: str) -> list[str]:
+    """Lowercase, tokenize, and stem text for keyword matching."""
+    if not text:
+        return []
+
+    tokens = re.findall(r"[a-z0-9]+", text.lower())
+    return [_STEMMER.stem(token) for token in tokens]
 
 class TextPreprocessor:
     """
