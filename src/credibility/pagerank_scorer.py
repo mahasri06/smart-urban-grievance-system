@@ -51,9 +51,9 @@ def _build_graph(posts: list[ScrapedPost]) -> nx.Graph:
     """
     G = nx.Graph()
 
-    # Add nodes
+    # Add nodes (use baseline engagement score of 1.0 since specific metrics were removed)
     for post in posts:
-        engagement = math.log1p(post.upvotes + post.num_comments)
+        engagement = 1.0
         G.add_node(post.id, engagement=engagement, post=post)
 
     # Add edges between posts sharing category + location

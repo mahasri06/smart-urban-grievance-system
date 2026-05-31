@@ -190,7 +190,7 @@ if page == "📊 Overview":
             hole=0.4,
         )
         fig.update_traces(textposition="inside", textinfo="percent+label")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig)
 
     # Status breakdown
     with col_right:
@@ -205,7 +205,7 @@ if page == "📊 Overview":
             text="count",
         )
         fig2.update_layout(showlegend=False)
-        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(fig2)
 
     st.markdown("---")
     st.subheader("Recent Complaints")
@@ -253,7 +253,7 @@ elif page == "📍 Location Heatmap":
             text="count",
         )
         fig.update_layout(xaxis_tickangle=-45, coloraxis_showscale=False)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig)
 
     with col2:
         st.subheader("🔥 Top Hotspots")
@@ -279,7 +279,7 @@ elif page == "📍 Location Heatmap":
         text_auto=True,
     )
     fig2.update_layout(xaxis_tickangle=-45)
-    st.plotly_chart(fig2, use_container_width=True)
+    st.plotly_chart(fig2)
 
     st.markdown("---")
     st.subheader("Urgency by Location")
@@ -299,7 +299,7 @@ elif page == "📍 Location Heatmap":
         barmode="group",
     )
     fig3.update_layout(xaxis_tickangle=-45)
-    st.plotly_chart(fig3, use_container_width=True)
+    st.plotly_chart(fig3)
 
 
 # ===========================================================================
@@ -332,7 +332,7 @@ elif page == "🏷️ Category & Sentiment":
             hole=0.3,
         )
         fig.update_traces(textposition="inside", textinfo="percent+label")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig)
 
     # Sentiment distribution
     with col2:
@@ -348,7 +348,7 @@ elif page == "🏷️ Category & Sentiment":
             hole=0.3,
         )
         fig2.update_traces(textposition="inside", textinfo="percent+label")
-        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(fig2)
 
     st.markdown("---")
 
@@ -369,7 +369,7 @@ elif page == "🏷️ Category & Sentiment":
         text_auto=True,
     )
     fig3.update_layout(xaxis_tickangle=-30)
-    st.plotly_chart(fig3, use_container_width=True)
+    st.plotly_chart(fig3)
 
     st.markdown("---")
 
@@ -389,7 +389,7 @@ elif page == "🏷️ Category & Sentiment":
         barmode="group",
     )
     fig4.update_layout(xaxis_tickangle=-30)
-    st.plotly_chart(fig4, use_container_width=True)
+    st.plotly_chart(fig4)
 
 
 # ===========================================================================
@@ -442,7 +442,7 @@ elif page == "🔗 Pattern Mining":
                 display_df["confidence"] = display_df["confidence"].map("{:.3f}".format)
                 display_df["lift"] = display_df["lift"].map("{:.3f}".format)
 
-                st.dataframe(display_df, use_container_width=True, hide_index=True)
+                st.dataframe(display_df, hide_index=True)
 
                 # Visualise top rules
                 if len(rules_df) > 0:
@@ -459,7 +459,7 @@ elif page == "🔗 Pattern Mining":
                         text=top_rules["lift"].map("{:.2f}".format),
                     )
                     fig.update_layout(yaxis={"categoryorder": "total ascending"})
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig)
 
         st.markdown("---")
 
@@ -573,7 +573,7 @@ elif page == "🌐 Scraped Data":
         )
         fig.add_vline(x=0.6, line_dash="dash", line_color="red",
                       annotation_text="High credibility threshold")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig)
 
     st.markdown("---")
 
@@ -592,14 +592,14 @@ elif page == "🌐 Scraped Data":
             text="count",
         )
         fig2.update_layout(showlegend=False, xaxis_tickangle=-30)
-        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(fig2)
 
     with col2:
         st.subheader("Source Breakdown")
         sub_counts = df["source"].value_counts().reset_index()
         sub_counts.columns = ["source", "count"]
         fig3 = px.pie(sub_counts, names="source", values="count", hole=0.3)
-        st.plotly_chart(fig3, use_container_width=True)
+        st.plotly_chart(fig3)
 
     st.markdown("---")
 
@@ -608,4 +608,4 @@ elif page == "🌐 Scraped Data":
     display_cols = ["id", "source", "title", "location", "category",
                     "urgency", "sentiment", "credibility_score"]
     available_cols = [c for c in display_cols if c in df.columns]
-    st.dataframe(df[available_cols], use_container_width=True, hide_index=True)
+    st.dataframe(df[available_cols], hide_index=True)
