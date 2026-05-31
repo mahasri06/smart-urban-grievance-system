@@ -19,13 +19,13 @@ We tested four different algorithms: **Naive Bayes, Logistic Regression, LinearS
 Here is what happened:
 
 ### Task 1: Predicting the Category
-* **What happened:** All four algorithms scored a perfect 1.0 (100%). Because the dataset has very clear differences between categories (e.g., words like "pothole" clearly mean *Roads & Traffic*), the models found this task very easy.
+* **What happened:** Because we injected messy, conversational text into the dataset, the older Naive Bayes algorithm started to struggle slightly (scoring 99.55%). Logistic Regression, LinearSVC, and Random Forest all scored a perfect 1.0 (100%).
 * **Why Logistic Regression won:** When multiple models tie with perfect scores, we break the tie by choosing **Logistic Regression** so that our entire system uses one consistent algorithmic architecture, rather than mixing and matching.
 
 ### Task 2: Predicting the Urgency
 * **What happened:** Predicting urgency is harder. A complaint about "water" could be low urgency (a small leak) or high urgency (a massive flood). 
 * **The Scores:** 
-  - Naive Bayes scored **0.9939** (99.39%).
+  - Naive Bayes scored **0.9960** (99.60%).
   - Logistic Regression scored a perfect **1.0000** (100%).
 * **Why Logistic Regression won:** Logistic Regression mathematically looks at how different words weigh against each other, making it much better at picking up subtle cues about severity than Naive Bayes. Because it scored perfectly, it was crowned the winner for predicting Urgency.
 
