@@ -28,7 +28,7 @@ Models were evaluated on a held-out test set (20% of the dataset, stratified). T
 | LinearSVC | 1.0000 |
 | Random Forest | 1.0000 |
 
-*All models performed perfectly on the dataset. The original **Naive Bayes** model was retained as the winner for Category classification due to its simpler computational complexity and faster inference time.*
+*All models performed perfectly on the dataset. While Naive Bayes is simpler, we configured the pipeline to select **Logistic Regression** to maintain a consistent algorithmic architecture across both classification tasks.*
 
 ### Urgency Classifier Results
 
@@ -43,7 +43,7 @@ Models were evaluated on a held-out test set (20% of the dataset, stratified). T
 
 ## 4. Final Selected Models
 The training pipeline (`src/classification/train.py`) automatically evaluates these models and exports the highest-scoring pipelines to `src/models/`:
-- `category_classifier.pkl`: **Multinomial Naive Bayes**
+- `category_classifier.pkl`: **Logistic Regression**
 - `urgency_classifier.pkl`: **Logistic Regression**
 
 ## 5. Conclusion

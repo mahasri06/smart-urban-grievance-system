@@ -6,7 +6,7 @@ If your professor asks you which model is "the best" and *why*, here is the clea
 Your system does two different tasks, so it needs two different models:
 
 1. **Task 1: Predicting the Category** (e.g., Is it a Water issue or Electricity issue?)
-   - **Winner:** Naive Bayes
+   - **Winner:** Logistic Regression
 2. **Task 2: Predicting the Urgency** (e.g., Is it HIGH, MEDIUM, or LOW urgency?)
    - **Winner:** Logistic Regression
 
@@ -20,7 +20,7 @@ Here is what happened:
 
 ### Task 1: Predicting the Category
 * **What happened:** All four algorithms scored a perfect 1.0 (100%). Because the dataset has very clear differences between categories (e.g., words like "pothole" clearly mean *Roads & Traffic*), the models found this task very easy.
-* **Why Naive Bayes won:** When multiple models tie with perfect scores, the best practice in computer science is to pick the **simplest and fastest** one. Naive Bayes is extremely lightweight, requires very little memory, and trains instantly. Therefore, it is the best choice for this task.
+* **Why Logistic Regression won:** When multiple models tie with perfect scores, we break the tie by choosing **Logistic Regression** so that our entire system uses one consistent algorithmic architecture, rather than mixing and matching.
 
 ### Task 2: Predicting the Urgency
 * **What happened:** Predicting urgency is harder. A complaint about "water" could be low urgency (a small leak) or high urgency (a massive flood). 
@@ -32,4 +32,4 @@ Here is what happened:
 ---
 
 ## Summary for your Presentation
-> *"To ensure academic rigor, we evaluated four different machine learning algorithms. We found that for determining the **Category** of a complaint, a simple **Naive Bayes** model was perfectly accurate and highly efficient. However, for predicting the **Urgency**, the baseline Naive Bayes model struggled slightly. By upgrading to **Logistic Regression**, we achieved 100% accuracy in predicting urgency. Therefore, our final system uses a hybrid approach: Naive Bayes for Categories, and Logistic Regression for Urgency."*
+> *"To ensure academic rigor, we evaluated four different machine learning algorithms. We found that for determining the **Category** of a complaint, all algorithms (including Naive Bayes) were perfectly accurate. However, for predicting the **Urgency**, the baseline Naive Bayes model struggled slightly. By upgrading to **Logistic Regression**, we achieved 100% accuracy in predicting urgency. Therefore, we configured our final system to use **Logistic Regression** exclusively for all classification tasks, providing the ideal balance of high accuracy and architectural consistency."*
