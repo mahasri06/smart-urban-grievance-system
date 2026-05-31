@@ -14,7 +14,7 @@ app = FastAPI(
     title="Smart Urban Grievance Redressal System",
     description=(
         "Collects, classifies, and analyses urban civic complaints "
-        "using NLP, Naive Bayes, and web data mining techniques."
+        "using NLP, Logistic Regression, and web data mining techniques."
     ),
     version="1.0.0",
 )
