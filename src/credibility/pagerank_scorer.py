@@ -51,9 +51,9 @@ def _build_graph(posts: list[ScrapedPost]) -> nx.Graph:
     """
     G = nx.Graph()
 
-    # Add nodes
+    # Add nodes (use baseline engagement score of 1.0 since specific metrics were removed)
     for post in posts:
-        engagement = math.log1p(post.upvotes + post.num_comments)
+        engagement = 1.0
         G.add_node(post.id, engagement=engagement, post=post)
 
     # Add edges between posts sharing category + location
@@ -88,7 +88,13 @@ def _personalisation_vector(posts: list[ScrapedPost], G: nx.Graph) -> dict[int, 
         for post in posts
         if post.id in G.nodes
     }
-    total = sum(engagements.values()) or 1.0
+    
+    total = sum(engagements.values())
+    if total == 0:
+        # If all posts have 0 engagement, distribute weight equally
+        n = len(engagements)
+        return {node_id: 1.0 / n for node_id in engagements}
+        
     return {node_id: eng / total for node_id, eng in engagements.items()}
 
 
