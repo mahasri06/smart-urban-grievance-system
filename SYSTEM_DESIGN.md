@@ -26,7 +26,7 @@ graph TD
 
     subgraph Background Processing Engine
         NLP[NLP Preprocessing Worker]
-        CLASS[Naive Bayes Classifier]
+        CLASS[Logistic Regression Classifier]
     end
 
     subgraph Advanced Data Mining Engine
@@ -78,8 +78,8 @@ graph TD
 
 ### C. Classification Engine (Machine Learning)
 - **Responsibility:** Categorize the normalized text.
-- **Algorithm:** **Naive Bayes Classifier**.
-- **Why Naive Bayes?:** It is highly efficient for text categorization (e.g., classifying a complaint into "Water", "Electricity", or "Roads") because it calculates the probability of a category based on the presence of specific keywords independently.
+- **Algorithm:** **Logistic Regression Classifier**.
+- **Why Logistic Regression?:** It is highly efficient and robust for text categorization (e.g., classifying a complaint into "Water", "Electricity", or "Roads") because it calculates the probability of a category based on the presence of specific keywords while handling overlapping vocabulary well.
 
 ### D. Advanced Data Mining Engine
 This is the core "brain" of the project, executing specific algorithms to extract urban intelligence:
@@ -107,7 +107,7 @@ This is the core "brain" of the project, executing specific algorithms to extrac
 1. **Ingestion:** Scraper sends `[N]` JSON objects to `/complaints/bulk`.
 2. **Fast Save:** System validates schema (DTO) and writes to DB with `status="PENDING"`. Network connection is closed; client is freed.
 3. **Queue:** Event loop triggers Background Task.
-4. **NLP & Classify:** Background task cleans text, runs Naive Bayes, and tags the entity (Category, Urgency, Sentiment). Updates DB to `status="PROCESSED"`.
+4. **NLP & Classify:** Background task cleans text, runs Logistic Regression, and tags the entity (Category, Urgency, Sentiment). Updates DB to `status="PROCESSED"`.
 5. **Batch Mining:** A scheduled Cron Job (e.g., every 1 hour) runs TF-IDF and Association Rule Mining on all newly `PROCESSED` rows to generate updated heatmaps and detect new sequential patterns.
 6. **Visualization:** Dashboard queries the aggregated pattern tables to render heatmaps for municipal authorities.
 

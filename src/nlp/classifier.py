@@ -4,7 +4,7 @@ Classifier
 Provides classify_text(text) → (category, urgency, sentiment)
 
 Strategy:
-  - At startup, tries to load pre-trained Naive Bayes + TF-IDF pipelines
+  - At startup, tries to load pre-trained Logistic Regression + TF-IDF pipelines
     from src/models/. If the model files exist, they are used for all
     predictions (real ML).
   - If models are not found (e.g., train.py hasn't been run yet), falls
@@ -37,7 +37,7 @@ def _load_models():
         try:
             _category_model = joblib.load(CATEGORY_MODEL_PATH)
             _urgency_model = joblib.load(URGENCY_MODEL_PATH)
-            print("[Classifier] Loaded trained Naive Bayes models.")
+            print("[Classifier] Loaded trained Logistic Regression models.")
         except Exception as e:
             print(f"[Classifier] Failed to load models: {e}. Using keyword fallback.")
             _category_model = None
