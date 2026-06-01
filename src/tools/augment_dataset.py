@@ -1,102 +1,110 @@
-import pandas as pd
-import random
+import argparse
 import os
+import sys
 
+import pandas as pd
+from sklearn.model_selection import GroupShuffleSplit
+
+# Ensure src is importable when running from repo root.
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
+from classification.data_utils import normalize_text
+from classification.synthetic_data import (
+    generate_hard_holdout_datasets,
+    generate_synthetic_data,
+    merge_datasets,
+    write_dataset_csv,
+)
+
 CSV_PATH = os.path.join(BASE_DIR, "data", "real_complaints.csv")
 
-# Synthetic templates for conversational complaints
-TEMPLATES = {
-    "Noise & Pollution": [
-        ("My neighbors have been blasting loud music all night and I cannot sleep.", "LOW"),
-        ("There is constant construction noise coming from the site next door at 3 AM.", "MEDIUM"),
-        ("Someone is running a noisy generator outside my window, it is unbearable.", "LOW"),
-        ("The factory down the road is emitting thick black smoke and smells like chemicals.", "HIGH"),
-        ("A group of people are partying in the street and yelling very loudly.", "LOW"),
-        ("Air quality is terrible today, smog everywhere and it is hard to breathe.", "HIGH"),
-        ("Car alarms have been going off for 3 hours straight on my block.", "LOW")
-    ],
-    "Roads & Traffic": [
-        ("There is a massive pothole on Main Street that just ruined my tire.", "MEDIUM"),
-        ("Traffic is completely gridlocked at the intersection because the lights are out.", "HIGH"),
-        ("A delivery truck is double parked and blocking the entire lane.", "LOW"),
-        ("The street signs are completely faded and causing accidents.", "MEDIUM"),
-        ("Someone left a broken down car in the middle of the road.", "MEDIUM"),
-        ("There is a severe traffic jam stretching for miles due to an accident.", "HIGH"),
-        ("A commercial van is parked overnight in a residential zone.", "LOW"),
-        ("The sidewalk is completely blocked by construction debris.", "LOW")
-    ],
-    "Public Infrastructure": [
-        ("The water pipes burst on our street and it is flooding the entire road.", "HIGH"),
-        ("We haven't had electricity for 12 hours, the entire neighborhood is pitch black.", "HIGH"),
-        ("The public park equipment is broken and dangerous for children.", "MEDIUM"),
-        ("There is a massive water leak coming from the main line.", "HIGH"),
-        ("The streetlights are all broken and it feels very unsafe at night.", "MEDIUM"),
-        ("The garbage hasn't been collected in weeks and the smell is awful.", "MEDIUM"),
-        ("Someone dumped a huge pile of trash in the alleyway.", "LOW"),
-        ("The bus shelter glass was shattered and there is glass everywhere.", "MEDIUM")
-    ]
-}
 
-# Complex templates with overlapping terminology, sarcasm, ambiguity, and misspellings
-COMPLEX_TEMPLATES = {
-    "Noise & Pollution": [
-        ("The traffic from the new park construction is so loud I can't think. It's a disaster.", "MEDIUM"), # 'traffic', 'park' usually in other categories
-        ("Great job fixing the road, now the trucks rattle my house and make an ungodly racket.", "MEDIUM"),
-        ("There is literal garbage burning in the alley, it smells toxic.", "HIGH"), # 'garbage' usually public infrastructure
-        ("Smog from the highway is completely unbarable today. Very bad.", "HIGH"), # misspelling
-        ("i cnt sleep bcoz of the water pump noise from the broken pipes!!", "MEDIUM") # abbreviations, 'water pipes' overlap
-    ],
-    "Roads & Traffic": [
-        ("The park entrance is completely blocked by a collapsed wall, forcing cars into the wrong lane.", "HIGH"), # 'park', 'wall'
-        ("So much noise from the cars stuck in the pothole. Please fix.", "LOW"), # 'noise'
-        ("The heavy rain completely flooded the intersection and now no one can move.", "HIGH"), # 'flooded' usually public infrastructure
-        ("ther is a huge bump on th road dat just borke my car", "MEDIUM"), # misspellings
-        ("Amazing infrastructure you have here, it took me 3 hours to move 2 miles.", "LOW") # sarcasm, 'infrastructure'
-    ],
-    "Public Infrastructure": [
-        ("The noise from the broken power transformer is sparking and driving us crazy.", "HIGH"), # 'noise' overlap
-        ("Cars keep crashing into the broken street light pole that fell over.", "HIGH"), # 'cars', 'crashing' overlap
-        ("The overflowing trash is spilling into the road and stopping traffic.", "MEDIUM"), # 'road', 'traffic'
-        ("we hav no watr for 3 days plz help", "HIGH"), # heavy misspellings
-        ("The park looks like a warzone, shattered glass everywhere.", "MEDIUM")
-    ]
-}
+def _split_holdout(df: pd.DataFrame, holdout_size: float, seed: int) -> tuple[pd.DataFrame, pd.DataFrame | None]:
+    if holdout_size <= 0:
+        return df, None
+    df = df.copy()
+    df["__norm_text"] = df["text"].map(normalize_text)
+    splitter = GroupShuffleSplit(n_splits=1, test_size=holdout_size, random_state=seed)
+    train_idx, holdout_idx = next(splitter.split(df, groups=df["__norm_text"]))
+    train_df = df.iloc[train_idx].reset_index(drop=True)
+    holdout_df = df.iloc[holdout_idx].reset_index(drop=True)
+    return train_df, holdout_df
 
-def generate_synthetic_data(num_samples=3000):
-    new_rows = []
-    for _ in range(num_samples):
-        # 50% chance to use simple template, 50% chance to use complex template
-        if random.random() > 0.5:
-            source = TEMPLATES
-        else:
-            source = COMPLEX_TEMPLATES
-            
-        category = random.choice(list(source.keys()))
-        text, urgency = random.choice(source[category])
-        
-        # Add slight variations to make text messy
-        if random.random() > 0.5:
-            text = text.lower()
-        if random.random() > 0.8:
-            text = text + " Please fix it ASAP!!!"
-        if random.random() > 0.8:
-            text = "Hey! " + text
-            
-        new_rows.append({"text": text, "category": category, "urgency": urgency})
-        
-    return pd.DataFrame(new_rows)
+
+def _print_label_distribution(df: pd.DataFrame, label: str) -> None:
+    counts = df[label].value_counts(dropna=False)
+    print(f"\n[{label}] label distribution:")
+    for name, count in counts.items():
+        print(f"  - {name}: {count}")
+
 
 if __name__ == "__main__":
-    print("Generating 3000 synthetic conversational and complex complaints...")
-    new_df = generate_synthetic_data(3000)
-    
-    if os.path.exists(CSV_PATH):
-        old_df = pd.read_csv(CSV_PATH)
-        combined_df = pd.concat([old_df, new_df], ignore_index=True)
-        # Shuffle
-        combined_df = combined_df.sample(frac=1).reset_index(drop=True)
-        combined_df.to_csv(CSV_PATH, index=False)
-        print(f"Augmented dataset saved to {CSV_PATH}. Total rows: {len(combined_df)}")
+    parser = argparse.ArgumentParser(description="Augment complaint dataset")
+    parser.add_argument("--num-samples", type=int, default=3000, help="Number of new samples")
+    parser.add_argument("--data-path", default=CSV_PATH, help="Output dataset path")
+    parser.add_argument("--holdout-path", default=None, help="Optional holdout dataset path")
+    parser.add_argument("--holdout-size", type=float, default=0.0, help="Holdout ratio from combined data")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed")
+    parser.add_argument("--dedupe", action="store_true", help="Deduplicate by normalized text")
+    parser.add_argument("--no-dedupe", dest="dedupe", action="store_false")
+    parser.set_defaults(dedupe=True)
+    parser.add_argument("--hard-holdout", action="store_true", help="Create holdout from disjoint template pool")
+    parser.add_argument("--no-hard-holdout", dest="hard_holdout", action="store_false")
+    parser.set_defaults(hard_holdout=True)
+    parser.add_argument("--regenerate", action="store_true", help="Ignore existing dataset and rebuild")
+    args = parser.parse_args()
+
+    if args.holdout_size < 0 or args.holdout_size >= 1:
+        raise ValueError("--holdout-size must be between 0 and 1 (exclusive)")
+
+    existing = os.path.exists(args.data_path)
+    if args.regenerate:
+        existing = False
+
+    hard_holdout = bool(args.holdout_path and args.holdout_size > 0 and args.hard_holdout)
+    if hard_holdout and existing:
+        print("[Warn] Existing dataset found. Hard holdout can't be guaranteed without --regenerate.")
+        hard_holdout = False
+
+    if hard_holdout:
+        holdout_samples = max(1, int(round(args.num_samples * args.holdout_size)))
+        print("Generating hard holdout with disjoint templates...")
+        combined_df, holdout_df = generate_hard_holdout_datasets(
+            train_samples=args.num_samples,
+            holdout_samples=holdout_samples,
+            holdout_template_ratio=args.holdout_size,
+            seed=args.seed,
+            include_meta=False,
+        )
+        combined_df = merge_datasets(None, combined_df, args.seed, dedupe=args.dedupe)
+        holdout_df = merge_datasets(None, holdout_df, args.seed + 1, dedupe=args.dedupe)
     else:
-        print(f"Could not find {CSV_PATH}!")
+        print(f"Generating {args.num_samples} synthetic conversational and complex complaints...")
+        new_df = generate_synthetic_data(args.num_samples, args.seed)
+
+        old_df = None if args.regenerate else (pd.read_csv(args.data_path) if os.path.exists(args.data_path) else None)
+        combined_df = merge_datasets(old_df, new_df, args.seed, dedupe=args.dedupe)
+
+        if args.dedupe:
+            combined_with_dupes = merge_datasets(old_df, new_df, args.seed, dedupe=False)
+            dropped = len(combined_with_dupes) - len(combined_df)
+            print(f"Deduped rows dropped: {dropped}")
+
+        if args.holdout_path:
+            combined_df, holdout_df = _split_holdout(combined_df, args.holdout_size, args.seed)
+        else:
+            holdout_df = None
+
+    write_dataset_csv(combined_df, args.data_path)
+    print(f"Augmented dataset saved to {args.data_path}. Total rows: {len(combined_df)}")
+
+    _print_label_distribution(combined_df, "category")
+    _print_label_distribution(combined_df, "urgency")
+
+    if args.holdout_path and holdout_df is not None:
+        write_dataset_csv(holdout_df, args.holdout_path)
+        print(f"Holdout dataset saved to {args.holdout_path}. Total rows: {len(holdout_df)}")
+        _print_label_distribution(holdout_df, "category")
+        _print_label_distribution(holdout_df, "urgency")
