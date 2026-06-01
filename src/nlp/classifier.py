@@ -3,23 +3,26 @@ Classifier
 ==========
 Provides classify_text(text) → (category, urgency, sentiment)
 
-Strategy:
-  - At startup, tries to load pre-trained Logistic Regression + TF-IDF pipelines
-    from src/models/. If the model files exist, they are used for all
-    predictions (real ML).
-  - If models are not found (e.g., train.py hasn't been run yet), falls
-    back to a keyword-matching heuristic so the API still works.
+Strategy (tried in order, first success wins):
+  1. NLI zero-shot  — cross-encoder/nli-deberta-v3-small loaded from
+                      src/nlp/nli_classifier.py. Requires `transformers`
+                      and `torch` to be installed. Downloads the model
+                      (~180 MB) on first use and caches it locally.
+  2. TF-IDF models  — pre-trained Logistic Regression + TF-IDF pipelines
+                      from src/models/ (trained via classification/train.py).
+  3. Keyword rules  — deterministic keyword-matching heuristic that always
+                      works with no dependencies.
 
-To train the real models:
-    cd src
-    python classification/train.py
+Sentiment is always computed by the rule-based lexicon (Strategy 3 level)
+regardless of which strategy handles category/urgency — it is fast, requires
+no model, and is accurate enough for civic complaint text.
 """
 
 import os
 import joblib
 
 # ---------------------------------------------------------------------------
-# Model loading (done once at import time)
+# Strategy 2: TF-IDF pkl models (loaded once at import time)
 # ---------------------------------------------------------------------------
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -31,26 +34,29 @@ URGENCY_MODEL_PATH = os.path.join(MODELS_DIR, "urgency_classifier.pkl")
 _category_model = None
 _urgency_model = None
 
-def _load_models():
+
+def _load_tfidf_models() -> None:
+    """Load pre-trained TF-IDF + Logistic Regression pkl models if present."""
     global _category_model, _urgency_model
     if os.path.exists(CATEGORY_MODEL_PATH) and os.path.exists(URGENCY_MODEL_PATH):
         try:
             _category_model = joblib.load(CATEGORY_MODEL_PATH)
             _urgency_model = joblib.load(URGENCY_MODEL_PATH)
-            print("[Classifier] Loaded trained Logistic Regression models.")
-        except Exception as e:
-            print(f"[Classifier] Failed to load models: {e}. Using keyword fallback.")
+            print("[Classifier] Loaded TF-IDF/Logistic Regression models (Strategy 2).")
+        except Exception as exc:
+            print(f"[Classifier] Failed to load TF-IDF models: {exc}. Strategy 2 disabled.")
             _category_model = None
             _urgency_model = None
     else:
-        print("[Classifier] Model files not found. Using keyword fallback.")
+        print("[Classifier] TF-IDF model files not found (Strategy 2 disabled).")
         print("  -> Run: cd src && python classification/train.py")
 
-_load_models()
+
+_load_tfidf_models()
 
 
 # ---------------------------------------------------------------------------
-# Sentiment analysis (rule-based VADER-style word lists)
+# Strategy 3: Sentiment analysis — rule-based lexicon (always used)
 # ---------------------------------------------------------------------------
 
 _NEGATIVE_WORDS = {
@@ -79,7 +85,7 @@ def _analyze_sentiment(text: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Keyword fallback classifier
+# Strategy 3: Keyword fallback — deterministic, no dependencies
 # ---------------------------------------------------------------------------
 
 _CATEGORY_KEYWORDS = {
@@ -128,30 +134,51 @@ def _keyword_classify(text: str) -> tuple[str, str]:
 
 def classify_text(text: str) -> tuple[str, str, str]:
     """
-    Main classification function.
+    Classify complaint text into category, urgency, and sentiment.
 
     Args:
-        text: cleaned/preprocessed complaint text
+        text: Cleaned/preprocessed complaint text.
 
     Returns:
         (category, urgency, sentiment)
         e.g. ("Roads & Traffic", "HIGH", "NEGATIVE")
+
+    Strategy order:
+        1. NLI zero-shot  (cross-encoder/nli-deberta-v3-small)
+        2. TF-IDF models  (pre-trained Logistic Regression pkl)
+        3. Keyword rules  (always available, no dependencies)
     """
     if not text:
         return "General", "LOW", "NEUTRAL"
 
-    # Sentiment is always rule-based (fast, no model needed)
+    # Sentiment is always rule-based — fast and dependency-free
     sentiment = _analyze_sentiment(text)
 
-    # Category + Urgency: use trained models if available, else keyword fallback
+    # ------------------------------------------------------------------
+    # Strategy 1: NLI zero-shot classifier (primary)
+    # ------------------------------------------------------------------
+    try:
+        from nlp.nli_classifier import classify_category, classify_urgency, is_available  # noqa: PLC0415
+        if is_available():
+            category, _ = classify_category(text)
+            urgency, _  = classify_urgency(text)
+            return category, urgency, sentiment
+    except Exception as exc:
+        print(f"[Classifier] NLI strategy failed: {exc}. Trying TF-IDF models.")
+
+    # ------------------------------------------------------------------
+    # Strategy 2: pre-trained TF-IDF + Logistic Regression pkl models
+    # ------------------------------------------------------------------
     if _category_model is not None and _urgency_model is not None:
         try:
             category = _category_model.predict([text])[0]
-            urgency = _urgency_model.predict([text])[0]
-        except Exception as e:
-            print(f"[Classifier] Prediction error: {e}. Falling back to keywords.")
-            category, urgency = _keyword_classify(text)
-    else:
-        category, urgency = _keyword_classify(text)
+            urgency  = _urgency_model.predict([text])[0]
+            return category, urgency, sentiment
+        except Exception as exc:
+            print(f"[Classifier] TF-IDF strategy failed: {exc}. Falling back to keywords.")
 
+    # ------------------------------------------------------------------
+    # Strategy 3: keyword-matching heuristic (always available)
+    # ------------------------------------------------------------------
+    category, urgency = _keyword_classify(text)
     return category, urgency, sentiment
